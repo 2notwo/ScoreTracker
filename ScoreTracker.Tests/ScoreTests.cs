@@ -7,10 +7,8 @@ public class ScoreTests
     [Fact]
     public void Points_cannot_be_negative()
     {
-        // Arrange: set up what you need
         var score = new Score();
 
-        // Act + Assert: do the thing, check the result
         Assert.Throws<ArgumentException>(() => score.Points = -10);
     }
 
