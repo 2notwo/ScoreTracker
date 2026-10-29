@@ -1,5 +1,4 @@
 ﻿using ScoreTracker;
-using System.ComponentModel;
 
 var players = new List<Player>();
 var games = new List<Game>();
@@ -52,17 +51,22 @@ void AddGame()
 void AddScore()
 {
 
+    bool canContinue = true;
+
     if (players.Count == 0)
     {
         Console.WriteLine("There are no players, add a player first.");
-        return;
+        canContinue = false;
     }
 
     if (games.Count == 0)
     {
         Console.WriteLine("There are no games, add a game first.");
-        return;
+        canContinue = false;
     }
+
+    if (!canContinue)
+        return;
 
     foreach (var player in players)
     {
@@ -108,8 +112,71 @@ void AddScore()
 
 
 }
-void ShowLeaderboard() => Console.WriteLine("TODO: leaderboard");
-void ShowPersonalBest() => Console.WriteLine("TODO: personal best");
+
+void ShowLeaderboard()
+{
+    foreach (var g in games)
+        Console.WriteLine(g);
+
+    int gameId = ReadInt("Game ID: ");
+    var game = games.FirstOrDefault(g => g.Id == gameId);
+    if (game == null)
+    {
+        Console.WriteLine("No game with that ID.");
+        return;
+    }
+
+    var top10 = scores
+        .Where(s => s.GameId == gameId)
+        .OrderByDescending(s => s.Points)
+        .Take(10)
+        .ToList();
+
+    if (top10.Count == 0)
+    {
+        Console.WriteLine($"No scores for {game.Name} yet.");
+        return;
+    }
+
+    Console.WriteLine($"--- {game.Name}: top 10 ---");
+    int rank = 1;
+    foreach (var s in top10)
+    {
+        var player = players.First(p => p.Id == s.PlayerId);
+        Console.WriteLine($"{rank}. {player.Name} - {s.Points}");
+        rank++;
+    }
+}
+
+void ShowPersonalBest()
+{
+    foreach(var p in players)
+        Console.WriteLine(p);
+
+    int playerId = ReadInt("Player ID: ");
+    var player = players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null)
+    {
+        Console.WriteLine("No player with that ID.");
+        return;
+    }
+
+    var pScores = scores
+        .Where(s => s.PlayerId == playerId).ToList();
+
+    if (!pScores.Any())
+    {
+        Console.WriteLine($"Player {player.Name} has no scores.");
+        return;
+    }
+
+    var best = pScores
+        .OrderByDescending(s => s.Points)
+        .First();
+    var game = games.First(g => g.Id == best.GameId);
+    
+    Console.WriteLine($"{player.Name}'s best is {best.Points} on {game.Name}");
+}
 
 int ReadInt(string prompt)
 {
