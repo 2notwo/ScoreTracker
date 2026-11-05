@@ -1,8 +1,6 @@
 ﻿using ScoreTracker;
 
-var players = new List<Player>();
-var games = new List<Game>();
-var scores = new List<Score>();
+var service = new ScoreService();
 
 bool running = true;
 while (running)
@@ -35,31 +33,28 @@ while (running)
 void AddPlayer()
 {
     string name = ReadText("Player name: ");
-    Player player = new Player { Id = players.Count + 1, Name = name };
-    players.Add(player);
+    var player = service.AddPlayer(name);
     Console.WriteLine($"Added {player}");
 }
 
 void AddGame()
 {
     string name = ReadText("Game name: ");
-    Game game = new Game { Id = games.Count + 1, Name = name };
-    games.Add(game);
+    var game = service.AddGame(name);
     Console.WriteLine($"Added {game}");
 }
 
 void AddScore()
 {
-
     bool canContinue = true;
 
-    if (players.Count == 0)
+    if (service.Players.Count == 0)
     {
         Console.WriteLine("There are no players, add a player first.");
         canContinue = false;
     }
 
-    if (games.Count == 0)
+    if (service.Games.Count == 0)
     {
         Console.WriteLine("There are no games, add a game first.");
         canContinue = false;
@@ -68,39 +63,38 @@ void AddScore()
     if (!canContinue)
         return;
 
-    foreach (var player in players)
+    foreach (var player in service.Players)
     {
         Console.WriteLine(player);
     }
 
     int playerId = ReadInt("Choose a player ID: ");
-    if (!players.Any(p => p.Id == playerId))
+    if (!service.Players.Any(p => p.Id == playerId))
     {
-        Console.WriteLine("Player ID doesn't exist");
+        Console.WriteLine("Player ID does not exist.");
         return;
     }
+    
 
-    foreach (var game in games)
+    foreach (var game in service.Games)
     {
         Console.WriteLine(game);
     }
 
     int gameId = ReadInt("Choose a game ID: ");
-    if (!games.Any(g => g.Id == gameId))
+    if (!service.Games.Any(g => g.Id == gameId))
     {
-        Console.WriteLine("Game ID doesn't exist");
+        Console.WriteLine("Game ID does not exist.");
         return;
     }
-
     int points = ReadInt("How many points: ");
 
     try
     {
-        Score score = new Score { PlayerId = playerId, GameId = gameId, Points = points };
-        scores.Add(score);
+        service.AddScore(playerId, gameId, points);
 
-        Player player = players.First(p => p.Id == playerId);
-        Game game = games.First(g => g.Id == gameId);
+        Player player = service.Players.First(p => p.Id == playerId);
+        Game game = service.Games.First(g => g.Id == gameId);
 
         Console.WriteLine($"Added {points} points for {player.Name} on {game.Name}");
 
@@ -109,73 +103,70 @@ void AddScore()
     {
         Console.WriteLine(ex.Message);
     }
-
-
 }
 
 void ShowLeaderboard()
 {
-    foreach (var g in games)
+    foreach (var g in service.Games)
         Console.WriteLine(g);
 
     int gameId = ReadInt("Game ID: ");
-    var game = games.FirstOrDefault(g => g.Id == gameId);
-    if (game == null)
+    
+    try
     {
-        Console.WriteLine("No game with that ID.");
-        return;
+        var top = service.GetTopScores(gameId);
+        var game = service.Games.First(g => g.Id == gameId);
+        
+        if (top.Count == 0)
+        {
+            Console.WriteLine($"No scores for {game.Name} yet.");
+            return;
+        }
+
+        Console.WriteLine($"--- {game.Name}: top 10 ---");
+        int rank = 1;
+        foreach (var s in top)
+        {
+            var player = service.Players.First(p => p.Id == s.PlayerId);
+            Console.WriteLine($"{rank}. {player.Name} - {s.Points}");
+            rank++;
+        }
     }
-
-    var top10 = scores
-        .Where(s => s.GameId == gameId)
-        .OrderByDescending(s => s.Points)
-        .Take(10)
-        .ToList();
-
-    if (top10.Count == 0)
+    catch (ArgumentException ex)
     {
-        Console.WriteLine($"No scores for {game.Name} yet.");
-        return;
-    }
-
-    Console.WriteLine($"--- {game.Name}: top 10 ---");
-    int rank = 1;
-    foreach (var s in top10)
-    {
-        var player = players.First(p => p.Id == s.PlayerId);
-        Console.WriteLine($"{rank}. {player.Name} - {s.Points}");
-        rank++;
+        Console.WriteLine(ex.Message);
     }
 }
 
 void ShowPersonalBest()
 {
-    foreach(var p in players)
+    foreach (var p in service.Players)
         Console.WriteLine(p);
 
     int playerId = ReadInt("Player ID: ");
-    var player = players.FirstOrDefault(p => p.Id == playerId);
-    if (player == null)
-    {
-        Console.WriteLine("No player with that ID.");
-        return;
-    }
-
-    var pScores = scores
-        .Where(s => s.PlayerId == playerId).ToList();
-
-    if (!pScores.Any())
-    {
-        Console.WriteLine($"Player {player.Name} has no scores.");
-        return;
-    }
-
-    var best = pScores
-        .OrderByDescending(s => s.Points)
-        .First();
-    var game = games.First(g => g.Id == best.GameId);
     
-    Console.WriteLine($"{player.Name}'s best is {best.Points} on {game.Name}");
+    try
+    {
+        var best = service.GetPersonalBest(playerId);
+        var player = service.Players.First(p => p.Id == playerId);
+        
+        if (best == null)
+        {
+            Console.WriteLine($"Player {player.Name} has no scores.");
+            return;
+        }
+        
+        var game = service.Games.First(g => g.Id == best.GameId);
+        
+        Console.WriteLine($"{player.Name}'s best is {best.Points} on {game.Name}");
+        Console.WriteLine("Best per Game: ");
+    }
+    catch (ArgumentException ex)
+    {
+        Console.WriteLine(ex.Message);
+    }
+    
+    Console.WriteLine("Best Per Game: ");
 }
 
 int ReadInt(string prompt)
