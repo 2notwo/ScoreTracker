@@ -1,6 +1,7 @@
 ﻿using ScoreTracker;
 
 var service = new ScoreService();
+service.Load("scores.json");
 
 bool running = true;
 while (running)
@@ -24,10 +25,12 @@ while (running)
         case "3": AddScore(); break;
         case "4": ShowLeaderboard(); break;
         case "5": ShowPersonalBest(); break;
-        case "6": running = false; break;
+        case "6":
+            service.Save("scores.json");
+            running = false;
+            break;
         default: Console.WriteLine("Not a valid option."); break;
     }
-
 }
 
 void AddPlayer()
@@ -74,7 +77,6 @@ void AddScore()
         Console.WriteLine("Player ID does not exist.");
         return;
     }
-    
 
     foreach (var game in service.Games)
     {
@@ -87,6 +89,7 @@ void AddScore()
         Console.WriteLine("Game ID does not exist.");
         return;
     }
+
     int points = ReadInt("How many points: ");
 
     try
@@ -97,7 +100,6 @@ void AddScore()
         Game game = service.Games.First(g => g.Id == gameId);
 
         Console.WriteLine($"Added {points} points for {player.Name} on {game.Name}");
-
     }
     catch (ArgumentException ex)
     {
@@ -111,12 +113,12 @@ void ShowLeaderboard()
         Console.WriteLine(g);
 
     int gameId = ReadInt("Game ID: ");
-    
+
     try
     {
         var top = service.GetTopScores(gameId);
         var game = service.Games.First(g => g.Id == gameId);
-        
+
         if (top.Count == 0)
         {
             Console.WriteLine($"No scores for {game.Name} yet.");
@@ -144,20 +146,20 @@ void ShowPersonalBest()
         Console.WriteLine(p);
 
     int playerId = ReadInt("Player ID: ");
-    
+
     try
     {
         var best = service.GetPersonalBest(playerId);
         var player = service.Players.First(p => p.Id == playerId);
-        
+
         if (best == null)
         {
             Console.WriteLine($"Player {player.Name} has no scores.");
             return;
         }
-        
+
         var game = service.Games.First(g => g.Id == best.GameId);
-        
+
         Console.WriteLine($"{player.Name}'s best is {best.Points} on {game.Name}");
         Console.WriteLine("Best per Game: ");
     }
@@ -165,8 +167,6 @@ void ShowPersonalBest()
     {
         Console.WriteLine(ex.Message);
     }
-    
-    Console.WriteLine("Best Per Game: ");
 }
 
 int ReadInt(string prompt)

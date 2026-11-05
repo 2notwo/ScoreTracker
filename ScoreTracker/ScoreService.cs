@@ -1,4 +1,5 @@
 namespace ScoreTracker;
+using System.Text.Json;
 
 public class ScoreService
 {
@@ -62,5 +63,37 @@ public class ScoreService
             .Where(s => s.PlayerId == playerId)
             .OrderByDescending(s => s.Points)
             .FirstOrDefault();
+    }
+
+    public void Save(string path)
+    {
+        var data = new SaveData { Players = Players, Games = Games, Scores = Scores };
+        var options = new JsonSerializerOptions { WriteIndented = true };
+        string json = JsonSerializer.Serialize(data, options);
+        File.WriteAllText(path, json);
+    }
+
+    public void Load(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return;
+        }
+
+        var json = File.ReadAllText(path);
+        var data = JsonSerializer.Deserialize<SaveData>(json);
+
+        if (data is null)
+        {
+            return;
+        }
+        
+        Players.Clear();
+        Games.Clear();
+        Scores.Clear();
+
+        Players.AddRange(data.Players);
+        Games.AddRange(data.Games);
+        Scores.AddRange(data.Scores);
     }
 }

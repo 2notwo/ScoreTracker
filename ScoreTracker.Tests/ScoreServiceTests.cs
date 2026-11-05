@@ -125,4 +125,23 @@ public class ScoreServiceTests
 
         Assert.Throws<ArgumentException>(() => service.AddScore(player.Id, 5, 100));
     }
+
+    [Fact]
+    public void Saved_data_loads_back()
+    {
+        string path = Path.GetTempFileName();
+        var original = new ScoreService();
+        var player = original.AddPlayer("Jakub");
+        var game = original.AddGame("Deadlock");
+        original.AddScore(player.Id, game.Id, 4500);
+
+        original.Save(path);
+        var loaded = new ScoreService();
+        loaded.Load(path);
+
+        Assert.Single(loaded.Players);
+        Assert.Equal(4500, loaded.Scores[0].Points);
+        File.Delete(path);
+    }
+    
 }
