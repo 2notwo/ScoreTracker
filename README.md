@@ -5,7 +5,7 @@ leaderboards and personal bests, saved to a JSON file.
 
 ## Features
 - Add players, games and scores, with input validation
-- Top 10 leaderboard per game and personal bests (LINQ)
+- Top 10 leaderboard per game (default) and personal bests (LINQ)
 - Data saved and loaded as JSON
 - Unit tests with xUnit
 
