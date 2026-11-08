@@ -48,6 +48,7 @@ public class ScoreService
         return Scores
             .Where(s => s.GameId == gameId)
             .OrderByDescending(s => s.Points)
+            .ThenBy(s => s.Date)
             .Take(count)
             .ToList();
     }

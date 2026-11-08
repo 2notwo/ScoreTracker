@@ -1,3 +1,5 @@
+using System.Resources;
+
 namespace ScoreTracker.Tests;
 
 public class ScoreServiceTests
@@ -74,6 +76,23 @@ public class ScoreServiceTests
     }
 
     [Fact]
+    public void GetTopScores_ranks_earlier_score_first_on_a_tie()
+    {
+        var service = new ScoreService();
+        var player = service.AddPlayer("Jakub");
+        var player2 = service.AddPlayer("Notwo");
+        var game = service.AddGame("Deadlock");
+        service.AddScore(player.Id, game.Id, 100);
+        var first = service.AddScore(player2.Id, game.Id, 100);
+
+        first.Date = DateTime.Now.AddMinutes(-10);
+
+        var top = service.GetTopScores(game.Id);
+        
+        Assert.Equal(first, top[0]);
+    }
+    
+    [Fact]
     public void GetPersonalBest_returns_highest_score_not_latest()
     {
         var service = new ScoreService();
@@ -143,5 +162,7 @@ public class ScoreServiceTests
         Assert.Equal(4500, loaded.Scores[0].Points);
         File.Delete(path);
     }
+    
+    
     
 }

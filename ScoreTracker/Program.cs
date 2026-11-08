@@ -161,7 +161,6 @@ void ShowPersonalBest()
         var game = service.Games.First(g => g.Id == best.GameId);
 
         Console.WriteLine($"{player.Name}'s best is {best.Points} on {game.Name}");
-        Console.WriteLine("Best per Game: ");
     }
     catch (ArgumentException ex)
     {
